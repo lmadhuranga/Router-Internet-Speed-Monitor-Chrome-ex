@@ -1,4 +1,4 @@
-# Router Internet Speed Monitor
+# Router Internet Speed Monitor !
 
 A lightweight Chrome extension for monitoring router internet statistics directly from the browser.
 
