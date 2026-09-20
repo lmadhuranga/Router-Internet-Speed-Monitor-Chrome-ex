@@ -1,318 +1,477 @@
-# Router Internet Speed Monitor
+# Router Monitor
 
-A Chrome Manifest V3 extension for monitoring and managing a **Dialog Sri Lanka ZLT P11 Outdoor LTE CPE** directly from the browser.
+A Chrome Manifest V3 extension for monitoring a **Dialog Sri Lanka ZLT P11 Outdoor LTE CPE** directly from the browser.
 
-The project communicates with the router's local web API and provides live internet speed, LTE signal information, Wi-Fi visibility controls, connected-device monitoring, device verification, and router diagnostics.
+Router Monitor connects only to the router's local web API and provides live WAN traffic, signal monitoring, Wi-Fi controls, device visibility, LTE cell tracking, local history analytics, and a compact always-on-top floating HUD.
 
-> Target device used during development:
->
-> - **Router:** Dialog Sri Lanka ZLT P11 Outdoor LTE CPE
-> - **Software:** 40.8
-> - **Configuration:** Sri Lanka Dialog V9.8
-> - **Default router address:** `http://192.168.8.1`
+## Target Router
 
----
+This project has been developed and verified against:
 
-## Router Used for This Project
+```text
+Router:        Dialog Sri Lanka ZLT P11 Outdoor LTE CPE
+Software:      40.8
+Configuration: Sri Lanka Dialog V9.8
+Router URL:    http://192.168.8.1
+API endpoint:  http://192.168.8.1/cgi-bin/http.cgi
+```
+
+The APIs are undocumented and firmware-specific. Do not assume the same request/response behavior on P11H, P11X, or other ZLT firmware versions.
 
 ![Dialog ZLT P11 Router Kit](docs/images/dialog-zlt-p11-router-kit.jpg)
 
-The project has been developed and tested around the Dialog-branded ZLT P11 outdoor LTE router shown above.
-
-The router normally consists of:
-
-- Outdoor LTE CPE / antenna unit
-- Indoor Wi-Fi router
-- PoE / power equipment
-- Ethernet connection between the outdoor and indoor units
-
-The APIs documented in this repository are firmware-specific and should not automatically be assumed to work with other ZLT models or firmware versions.
-
----
-
-## Screenshots
-
-### Extension Popup
-
-![Router Monitor Popup](docs/screenshots/router-monitor-popup.png)
-
-The popup provides a compact real-time view of the router and internet connection.
-
-It includes:
-
-- Upload speed
-- Download speed
-- Signal strength
-- Router connection status
-- Wi-Fi SSID visibility
-- Show / hide Wi-Fi controls
-- Manual refresh
-- Open Live Monitor
-- Open Settings
-
-### Live Monitor / New Tab Page
-
-![Router Monitor Live Monitor](docs/screenshots/router-monitor-live-monitor.png)
-
-The full-page Live Monitor provides a larger dashboard for long-running monitoring.
-
-It includes:
-
-- Live upload and download speed
-- Signal information
-- Wi-Fi visibility controls
-- Router/WAN information
-- Connected / leased device list
-- Device aliases
-- Verified / trusted devices
-- New-device detection
-- Red warning state for newly detected MAC addresses
-- Light / dark theme switching
-
-### Settings Page
-
-![Router Monitor Settings](docs/screenshots/router-monitor-settings.png)
-
-The Settings page is used to configure the extension.
-
-It includes:
-
-- Router address
-- Router administrator username
-- Router password
-- Connection test
-- Refresh interval
-- Speed display unit
-- Theme preference
-- New-device monitoring information
-
----
-
 ## Main Features
 
-- Real-time upload and download speed monitoring
-- `KB/s` and `Mbps` display modes
-- Router RSSI / signal display
-- Automatic authentication and retry after session expiry
-- Wi-Fi SSID visibility detection
-- Hide or show the Wi-Fi SSID
-- Full-page Live Monitor
-- Configurable light and dark themes
-- Connected / DHCP-leased device list
-- Device hostname, IP address, MAC address and lease time
-- Custom device names stored locally by MAC address
-- Mark devices as verified / trusted
-- Detect newly observed MAC addresses
-- Red `NEW DEVICE` warning state
-- Chrome notification for newly detected devices
-- Single bell + Chrome notification when the router disconnects or reconnects
-- Router LTE/cell diagnostic API discovery
-- API documentation
-- Importable Postman collection
+### Live Router Monitoring
 
----
+Router Monitor displays:
 
-## Connected Device Monitoring
+- live upload speed
+- live download speed
+- router RSSI / signal strength
+- router connection status
+- WAN IP
+- gateway
+- PLMN
+- router uptime
+- Wi-Fi SSID visibility
+- Wi-Fi SSID name
 
-The extension uses the router's verified `CMD 121` API to retrieve the DHCP client list.
-
-A device entry contains:
+Speed can be displayed as either:
 
 ```text
-IP Address
-MAC Address
-Hostname
-Remaining DHCP Lease Time
+KB/s
+Mbps
 ```
+
+The main router/status request uses `CMD 0` every 0.5 or 1 second depending on the selected refresh interval.
+
+### Compact Extension Popup
+
+The Chrome toolbar popup provides quick access to:
+
+- upload and download speed
+- signal strength
+- Wi-Fi visibility
+- show/hide Wi-Fi
+- monitoring pause/resume
+- manual refresh
+- **Float** HUD
+- full Live Monitor
+- Settings
+
+The popup can therefore launch the floating monitor without first opening the full dashboard.
+
+### Full Live Monitor
+
+The full-page Live Monitor includes:
+
+- live upload/download traffic
+- signal strength
+- Wi-Fi visibility controls
+- connected / DHCP-leased devices
+- router/WAN information
+- current LTE Cell ID
+- cell signal summary
+- Cell & Signal History access
+- floating HUD access
+- dark/light theme switching
+
+### Floating Always-on-Top HUD
+
+Router Monitor can open a compact Chrome Document Picture-in-Picture window.
 
 Example:
 
 ```text
-My Laptop
-192.168.8.106
-AA:BB:CC:DD:EE:FF
-Lease: 23:54:27
+Cell 633601      -92 dBm
+↑ 121 KB/s | ↓ 523 KB/s
+18s ago
 ```
 
-### Custom Device Names
+The HUD displays:
 
-A device can be renamed locally inside the extension.
+- current LTE Cell ID / ECI
+- live router signal strength
+- live upload speed
+- live download speed
+- age of the latest cell sample
 
-For example:
+Current size is approximately:
 
 ```text
-AA:BB:CC:DD:EE:FF
-Unknown device
-        ↓
-Living Room TV
+230 × 86 CSS pixels
 ```
 
-The alias is stored locally against the MAC address.
+The floating UI uses a dark, low-glare color scheme and stays above normal windows while Chrome keeps the Picture-in-Picture window open.
 
-### Device Verification
+The HUD can currently be opened from:
 
-Devices can be marked as:
+- Chrome extension popup
+- Live Monitor
+- Options page
 
-```text
-VERIFIED / My Device
-UNVERIFIED
-NEW DEVICE
-```
+Chrome requires a user gesture to open Document Picture-in-Picture.
 
-When a MAC address appears for the first time after the initial baseline, the extension marks it in red as a new device.
+The HUD content uses `pointer-events: none`, but Chrome owns the native Picture-in-Picture window itself. A pure Chrome extension cannot guarantee operating-system-level click-through for the complete outer window.
 
-> Modern phones and laptops can use private/randomized Wi-Fi MAC addresses. A physical device may therefore appear with a different MAC address after privacy settings or network settings change.
+## LTE Cell & Signal History
 
----
+Router Monitor collects one LTE cell/signal sample approximately once per minute using `CMD 186`.
 
-## LTE / Cell Diagnostics
-
-The router exposes radio diagnostics through `CMD 186`.
-
-The verified request currently includes:
+The lightweight history request uses:
 
 ```text
-AT+TZEARFCN?
-AT+TZBAND?
-AT+TZBANDWIDTH?
-AT+TZTRANSMODE?
 AT+TZRSRP?
-AT+TZRSRQ?
-AT+TZSINR?
-AT+TZTA?
-AT+TZTXPOWER?
-AT+CEREG?
 AT+TZGLBCELLID?
-AT+TZPHYCELLID?
 ```
 
-The response can provide:
-
-- EARFCN
-- LTE band
-- Bandwidth
-- Transmission mode
-- RSRP
-- RSRQ
-- SINR
-- Timing Advance
-- TX power
-- Tracking Area Code
-- Global Cell ID / ECI
-- eNodeB ID
-- Cell / sector ID
-- Physical Cell ID / PCI
-
-Example verified values:
-
-```text
-EARFCN:            38948
-Band:              40
-Bandwidth:         100
-RSRP:              -104 dBm
-RSRQ:              -11 dB
-SINR:              4 dB
-Global Cell ID:    633601
-eNodeB / Cell ID:  2475 / 1
-Physical Cell ID:  430
-```
-
-Cell/signal history is now collected locally once per minute.
-
-Each sample stores:
+Each local sample stores:
 
 ```text
 timestamp
 ISO date/time
 local date/time
 Global Cell ID / ECI
-Global Cell ID in hex
+Global Cell ID in hexadecimal
 eNodeB ID
-sector/cell ID
-RSRP signal strength (dBm)
+sector / cell ID
+RSRP signal strength in dBm
 ```
 
-The data stays in `chrome.storage.local`; nothing is sent outside the browser/router network. The extension keeps a rolling maximum of 43,200 samples (approximately 30 days at one sample per minute).
-
----
-
-## Wi-Fi Visibility
-
-The router's `CMD 117` API is used to read and update Wi-Fi configuration.
-
-The verified SSID visibility field is:
+Example:
 
 ```text
-macinfo_broadcast = 0  -> SSID visible
-macinfo_broadcast = 1  -> SSID hidden
+Timestamp:      2026-09-20 11:25:00
+Global Cell ID: 633601
+ECI Hex:        0x0009ab01
+eNodeB ID:      2475
+Sector ID:      1
+RSRP:           -104 dBm
 ```
 
-The extension first reads the current Wi-Fi configuration and preserves the remaining configuration values before changing the visibility field.
-
----
-
-## Router Access Rules
-
-The router uses `CMD 23` to save IPv4/IPv6 MAC access rules and `CMD 20` to apply them.
-
-Example rule:
-
-```json
-{
-  "enableRule": true,
-  "enableLink": false,
-  "remark": "Example IPv4 rule",
-  "ippro": "IPV4",
-  "mac": "AA:BB:CC:DD:EE:FF"
-}
-```
-
-Observed behavior:
+Cell identity is derived as:
 
 ```text
-enableLink = true   -> connection allowed
-enableLink = false  -> connection blocked
+eNodeB ID = Global Cell ID >> 8
+Sector ID = Global Cell ID & 255
 ```
 
-Rule workflow:
+All history stays in:
 
 ```text
-Build complete rule list
-        ↓
-POST CMD 23
-        ↓
-Verify success=true
-        ↓
-POST CMD 20
-        ↓
-Apply changes
+chrome.storage.local
 ```
 
----
+No external database, cloud service, or remote API is required.
 
-## Router API Documentation
+The current rolling limit is:
 
-Detailed notes for the verified router APIs are available here:
+```text
+43,200 samples
+≈ 30 days at one sample per minute
+```
+
+Collection is skipped while Router Monitor is paused or while the router is unavailable.
+
+## Cell & Signal History Dashboard
+
+The History dashboard helps turn the raw one-minute samples into useful information.
+
+Available ranges:
+
+```text
+1 hour
+6 hours
+24 hours
+7 days
+30 days
+```
+
+The dashboard includes:
+
+- RSRP signal-strength chart over time
+- separate visual color for each Cell ID
+- current Cell ID
+- latest signal
+- best signal
+- average signal
+- per-cell sample count
+- per-cell average RSRP
+- per-cell best RSRP
+- per-cell worst RSRP
+- per-cell last-seen timestamp
+- exact signal-value frequency
+- daily tower connection-session estimates
+- manual refresh
+- clear local history
+
+### Exact Signal Frequency
+
+For each Cell ID, Router Monitor counts how many one-minute samples occurred at each exact rounded RSRP value.
+
+Example:
+
+```text
+Cell 633601
+
+-99 dBm   -> 18 samples
+-100 dBm  -> 41 samples
+-101 dBm  -> 27 samples
+-102 dBm  -> 9 samples
+```
+
+Each value also records:
+
+```text
+first recorded timestamp
+last recorded timestamp
+```
+
+This makes it possible to determine which signal levels are most common on a specific LTE cell.
+
+### Tower Connection Sessions
+
+Router Monitor also derives approximate daily connection sessions from timestamped Cell ID samples.
+
+Example:
+
+```text
+Date:             2026-09-20
+Cell ID:          633601
+Connections:      4
+Approx. time:     ~2h 18m
+First seen:       07:12
+Last seen:        21:44
+```
+
+A new session is counted when:
+
+- the Cell ID changes
+- the calendar day changes
+- the gap between samples exceeds 2.5 minutes
+
+Approximate connected time is calculated from one-minute samples, so it should be treated as an estimate rather than exact modem attachment duration.
+
+This history can later support analysis such as:
+
+- which LTE tower/cell is used most often
+- how many times a cell was connected to during a day
+- approximate time spent on each cell
+- strongest and weakest periods
+- most common signal strength by cell
+- time-of-day signal patterns
+- cell switching patterns
+
+## Connected / Leased Devices
+
+Router Monitor uses `CMD 121` to read the router's DHCP client list.
+
+A device entry contains:
+
+```text
+IPv4 address
+MAC address
+Hostname
+Remaining DHCP lease time
+```
+
+Example:
+
+```text
+192.168.8.101
+AA:BB:CC:DD:EE:FF
+Example-Device
+23:56:09
+```
+
+This should be treated as a DHCP lease list rather than a guaranteed real-time physical connection list, because a recently disconnected device can remain present until its lease expires.
+
+Connected-device data refreshes every 30 seconds.
+
+### Device Aliases and Verification
+
+Router Monitor can:
+
+- assign a local custom name to a MAC address
+- mark a device as verified / trusted
+- mark newly observed devices as `NEW DEVICE`
+- display unverified devices
+- send a Chrome notification when a new MAC address is first detected after the initial baseline
+
+Modern phones and laptops may use randomized/private Wi-Fi MAC addresses, so the same physical device can sometimes appear with a new MAC address.
+
+## Wi-Fi SSID Visibility
+
+Router Monitor uses `CMD 117` to read and update Wi-Fi visibility.
+
+Verified values:
+
+```text
+macinfo_broadcast = 0 -> SSID visible
+macinfo_broadcast = 1 -> SSID hidden
+```
+
+Before changing this field, the extension reads the existing Wi-Fi configuration and preserves the other configuration values.
+
+## Router Connection Alerts
+
+Router Monitor detects router reachability transitions.
+
+When the router disconnects:
+
+- Chrome notification
+- disconnect bell
+- toolbar badge changes to `OFF`
+
+When the router reconnects:
+
+- Chrome notification
+- reconnect bell
+- normal speed badge resumes
+
+The initial extension startup state is treated as a baseline and does not trigger a connection/disconnection sound.
+
+Manifest V3 uses an offscreen document for WebAudio because the service worker cannot reliably play audio directly.
+
+## Pause / Resume Monitoring
+
+Monitoring can be paused from the popup.
+
+Available pause options:
+
+```text
+1 hour
+8 hours
+until tomorrow at 8:00 AM
+until manually enabled
+```
+
+While paused:
+
+- router refresh polling is skipped
+- device scans are skipped
+- LTE history sampling is skipped
+- toolbar badge shows `II`
+
+The popup displays an overlay with **Enable Monitoring** so monitoring can be resumed directly.
+
+## Local Storage
+
+Router Monitor uses `chrome.storage.local` for local settings and state, including:
+
+- router settings
+- password hash
+- theme
+- speed unit
+- monitoring pause state
+- device aliases
+- trusted-device status
+- new-device baseline
+- LTE Cell ID / RSRP history
+- latest cell/signal sample
+
+The extension does not intentionally upload this data to an external service.
+
+## Authentication
+
+The router uses `CMD 100` for authentication.
+
+The extension stores a password hash locally rather than the plaintext password entered into Settings.
+
+Default admin password hash used for the router's default `admin` password:
+
+```text
+MD5("admin")
+21232f297a57a5a743894a0e4a801fc3
+```
+
+Do not commit real credentials, active session IDs, cookies, Wi-Fi passwords, IMEI, IMSI, ICCID, or other private router/subscriber information.
+
+## Verified Router Commands
+
+| CMD | Method field | Purpose |
+|---|---|---|
+| `0` | `GET` | Router status and WAN byte counters |
+| `100` | `POST` | Authentication |
+| `117` | `GET` | Read Wi-Fi configuration |
+| `117` | `POST` | Update Wi-Fi configuration |
+| `121` | `GET` | DHCP client / leased-device list |
+| `186` | `POST` | LTE radio / Cell ID diagnostics |
+| `23` | `GET` / `POST` | MAC access-rule configuration |
+| `20` | `POST` | Apply/commit access-rule changes |
+
+Detailed API notes are available in:
 
 ```text
 docs/router-api.md
 ```
 
-Current documented commands:
+## MAC Access-Rule Feature Status
 
-| CMD | Purpose |
-|---|---|
-| `0` | Router status and WAN counters |
-| `100` | Authentication |
-| `117` | Wi-Fi configuration / SSID visibility |
-| `121` | DHCP client / device list |
-| `23` | Save IPv4 / IPv6 MAC access rules |
-| `20` | Apply / commit access rules |
-| `186` | LTE / cell radio diagnostics |
+The MAC/device blocking UI and runtime implementation are currently **removed from the active extension**.
 
-These APIs were discovered from the router's own web interface and tested against the target Dialog ZLT P11 firmware.
+The verified `CMD 23` and `CMD 20` documentation is intentionally retained in:
 
----
+```text
+docs/router-api.md
+```
+
+This allows the feature to be reused or redesigned later without losing the reverse-engineered router behavior.
+
+There is currently no active device block/unblock button or `CMD 23` polling in Router Monitor.
+
+## Polling / Sampling Intervals
+
+Current normal activity:
+
+| Data | Command | Interval |
+|---|---:|---:|
+| WAN status / speed | `CMD 0` | 0.5s or 1s |
+| DHCP / leased devices | `CMD 121` | 30s |
+| LTE Cell ID + RSRP history | `CMD 186` | ~1 minute |
+
+The Live Monitor's history view reads existing local data and does not create an additional LTE diagnostic request merely to render a chart.
+
+## Screenshots
+
+Compressed documentation images added to the repository:
+
+```text
+docs/images/dialog-zlt-p11-router-kit.jpg
+docs/screenshots/router-monitor-popup-overview.jpg
+docs/screenshots/router-monitor-live-monitor-overview.jpg
+docs/screenshots/router-monitor-history-overview.jpg
+docs/screenshots/router-monitor-floating-hud.jpg
+```
+
+### Router Kit
+
+![Dialog ZLT P11 Router Kit](docs/images/dialog-zlt-p11-router-kit.jpg)
+
+### Popup Overview
+
+Two popup screenshots combined into a single compressed JPG.
+
+![Router Monitor Popup Overview](docs/screenshots/router-monitor-popup-overview.jpg)
+
+### Live Monitor Overview
+
+Main live-monitor sections combined into a single compressed JPG.
+
+![Router Monitor Live Monitor Overview](docs/screenshots/router-monitor-live-monitor-overview.jpg)
+
+### Cell & Signal History Overview
+
+History chart and analytics tables combined into a single compressed JPG.
+
+![Router Monitor History Overview](docs/screenshots/router-monitor-history-overview.jpg)
+
+### Floating HUD
+
+Compact always-on-top floating window preview.
+
+![Router Monitor Floating HUD](docs/screenshots/router-monitor-floating-hud.jpg)
 
 ## Postman Collection
 
@@ -322,15 +481,7 @@ An importable Postman collection is included:
 postman/Dialog-ZLT-P11-Router-API.postman_collection.json
 ```
 
-Import it in Postman using:
-
-```text
-Import
-→ File
-→ Dialog-ZLT-P11-Router-API.postman_collection.json
-```
-
-The collection uses variables such as:
+Useful collection variables include:
 
 ```text
 {{baseUrl}}
@@ -340,44 +491,37 @@ The collection uses variables such as:
 {{mac}}
 ```
 
-Do not commit real credentials or active session information.
-
----
+Never save real active session information in a public repository.
 
 ## Installation
 
-1. Clone the repository.
+Clone the repository:
 
 ```bash
 git clone https://github.com/lmadhuranga/Router-Internet-Speed-Monitor-Chrome-ex.git
 cd Router-Internet-Speed-Monitor-Chrome-ex
 ```
 
-2. Open Chrome:
+Then:
+
+1. Open `chrome://extensions/`.
+2. Enable **Developer mode**.
+3. Click **Load unpacked**.
+4. Select the project directory containing `manifest.json`.
+5. Pin Router Monitor to the Chrome toolbar.
+6. Open Settings and confirm the router URL and login information.
+7. Use **Test Connection** before starting long-running monitoring.
+
+## Project Structure
 
 ```text
-chrome://extensions/
-```
-
-3. Enable **Developer mode**.
-
-4. Click **Load unpacked**.
-
-5. Select the extension directory containing `manifest.json`.
-
-6. Pin **Router Internet Speed Monitor** to the Chrome toolbar.
-
----
-
-## Recommended Project Structure
-
-```text
-Router-Internet-Speed-Monitor-Chrome-ex/
+Router-Monitor/
 ├── manifest.json
 ├── background.js
 ├── core.js
 ├── storage.js
 ├── md5.js
+├── cell-history.js
 │
 ├── popup.html
 ├── popup.css
@@ -387,77 +531,74 @@ Router-Internet-Speed-Monitor-Chrome-ex/
 ├── monitor.css
 ├── monitor.js
 │
+├── history.html
+├── history.css
+├── history.js
+│
 ├── options.html
 ├── options.css
 ├── options.js
 │
+├── offscreen.html
+├── offscreen.js
+│
 ├── docs/
 │   ├── router-api.md
-│   │
 │   ├── images/
-│   │   └── dialog-zlt-p11-router-kit.png
-│   │
+│   │   └── dialog-zlt-p11-router-kit.jpg
 │   └── screenshots/
-│       ├── router-monitor-popup.png
-│       ├── router-monitor-live-monitor.png
-│       └── router-monitor-settings.png
+│       ├── router-monitor-popup-overview.jpg
+│       ├── router-monitor-live-monitor-overview.jpg
+│       ├── router-monitor-history-overview.jpg
+│       └── router-monitor-floating-hud.jpg
 │
 ├── postman/
 │   └── Dialog-ZLT-P11-Router-API.postman_collection.json
 │
 ├── tests/
-│   ├── core.test.js
-│   ├── md5.test.js
-│   └── storage.test.js
-│
 └── README.md
 ```
 
----
+## Development
 
-## Screenshot File Names
+Run the automated tests with:
 
-Use these exact filenames when you capture the application screenshots:
-
-```text
-docs/screenshots/router-monitor-popup.png
-docs/screenshots/router-monitor-live-monitor.png
-docs/screenshots/router-monitor-settings.png
+```bash
+npm test
 ```
 
-Use this filename for the generated router image:
+JavaScript syntax can be checked with:
 
-```text
-docs/images/dialog-zlt-p11-router-kit.jpg
+```bash
+node --check background.js
+node --check popup.js
+node --check monitor.js
+node --check history.js
+node --check options.js
 ```
 
-This keeps the README paths stable and avoids needing to edit Markdown each time screenshots are replaced.
+## Current Version
 
----
+```text
+2.7.0
+```
 
-## Security
+## Privacy and Security
 
-Do not commit any of the following:
+Router Monitor is designed around a local router connection.
 
-- Router administrator password
-- Password hashes
-- Active `sessionId`
-- `SessionID` cookies
-- Wi-Fi passwords
-- IMEI
-- IMSI
-- ICCID
-- Other private router or subscriber identifiers
+Good practices:
 
-The extension stores configuration locally in Chrome.
-
-Passwords should not be stored as plaintext.
-
----
+- use it only on a router you are authorized to administer
+- do not publish router credentials
+- do not publish active session IDs or cookies
+- do not expose subscriber identifiers
+- remember that local extension storage is not the same as encrypted secret storage
+- clear history if you do not want long-term LTE cell records retained locally
 
 ## Compatibility
 
-This project currently targets:
+Currently verified target:
 
 ```text
 Dialog Sri Lanka
@@ -466,332 +607,10 @@ Software 40.8
 Sri Lanka Dialog V9.8
 ```
 
-Other ZLT routers such as P11H, P11X, or other firmware variants may expose different API commands, response formats, or configuration fields.
-
----
+Other devices and firmware versions may behave differently.
 
 ## Disclaimer
 
-This is an independent monitoring and management project based on behavior observed from a locally administered router.
+Router Monitor is an independent project based on behavior observed from a locally administered router.
 
 It is not official Dialog or ZLT software.
-
-Use it only with routers and networks that you are authorized to administer.
-
----
-
-## Connection Alerts
-
-Router Monitor detects transitions between reachable and unreachable router states.
-
-- **Disconnected:** one bell sound and a red/high-priority Chrome notification.
-- **Connected again:** one confirmation bell and a Chrome notification.
-- Alerts play only when the state changes; they do **not** repeat on every refresh.
-- The initial state after starting/reloading the extension is treated as a baseline and does not trigger a sound.
-
-Manifest V3 uses an offscreen audio document for the bell because the background service worker cannot reliably play audio directly.
-
----
-
-## Pause / Enable Monitoring
-
-The popup includes a Monitoring control:
-
-- **Pause Monitoring** can pause polling for 1 hour, 8 hours, until tomorrow at 8:00 AM, or indefinitely.
-- When paused, the popup shows **Enable Monitoring** so monitoring can always be resumed manually.
-- Device scans and router refresh polling are skipped while monitoring is paused.
-
----
-
-## Paused / Offline Overlay
-
-The popup makes non-running states immediately obvious:
-
-- When **paused**, the dashboard is faded and covered by a `Monitoring paused` overlay with an **Enable Monitoring** button.
-- When the router is **offline/unreachable**, the dashboard is faded and covered by a `Router offline` overlay with **Retry Connection** and **Open Settings** actions.
-- The extension toolbar badge shows `II` in amber while paused.
-- The extension toolbar badge shows `OFF` in red while the router is unreachable.
-- When connected again, the normal live-speed badge is restored.
-
----
-
-## Device Block / Allow Sequence
-
-Router Monitor now manages device access using **IPv4 rules only**.
-
-```text
-CMD 23 GET
-  ↓
-CMD 23 POST — update IPv4 rule
-  ↓
-wait for successful router response
-  ↓
-700 ms settle delay
-  ↓
-CMD 20 POST — apply/commit
-  ↓
-800 ms settle delay
-  ↓
-CMD 23 GET — verify IPv4
-```
-
-IPv6 rules are left untouched. Existing rules for other devices are preserved when the IPv4 rule list is saved.
-
----
-
-## Polling Intervals
-
-To reduce unnecessary traffic to the router:
-
-```text
-CMD 0   Router/WAN status + speed   every 0.5s or 1s
-CMD 121 Connected/DHCP devices      every 30s
-```
-
-`CMD 121` refreshes connected-device information every 30 seconds.
-
-The IPv6 request is never sent until the IPv4 CMD 23 POST has returned successfully. Likewise, `CMD 20` is never sent until the IPv6 save has also returned successfully.
-
-### IPv4 unblock behavior
-
-Router Monitor does not create a separate IPv4 `allow` rule when you press **Allow Internet**.
-
-Instead:
-
-```text
-Block device
-  -> CMD 23 contains an IPV4 rule with enableLink=false
-
-Allow / unblock device
-  -> that device's IPV4 rule is removed from CMD 23 datas
-  -> CMD 20 applies the updated rule list
-  -> CMD 23 GET verifies the IPV4 rule is gone
-```
-
-Unblocking removes the IPv4 rule entirely while preserving all unrelated rules.
-
----
-
-## MAC Blocking Feature Status
-
-The MAC/device block-unblock feature has been removed from the active extension runtime and UI.
-
-The verified CMD 23 / CMD 20 API documentation is intentionally retained under `docs/router-api.md` for possible reuse in a future version.
-
----
-
-## Current Cell & Signal summary
-
-The Live Monitor shows the latest locally stored LTE mapping in a readable sentence, for example:
-
-```text
-Cell ID 633601 is currently mapped to a signal strength of -104 dBm.
-Recorded 9/20/2026, 11:24:00 AM
-```
-
-The card also shows the eNodeB ID and sector ID. It reads from the locally collected one-minute history and does not create an additional router request.
-
-
----
-
-## Floating always-on-top cell HUD
-
-The Live Monitor includes **Float Cell**, which opens the latest cell/signal summary in Chrome's Document Picture-in-Picture window.
-
-The floating HUD shows:
-
-```text
-Cell 633601
--104 dBm
-GOOD
-Updated 9/20/2026, 11:25:00 AM
-```
-
-Behavior:
-
-- Always on top of normal application windows using Chrome's Document Picture-in-Picture API.
-- Uses the latest locally stored one-minute cell/signal sample.
-- Does not add another router polling request.
-- Uses `pointer-events:none` inside the HUD so its HTML content itself is non-interactive.
-- Opening the floating window requires a user click because Chrome requires a user gesture.
-- The floating window closes when its opener context is closed.
-- Chrome still owns the outer Picture-in-Picture window. A pure Chrome extension cannot make the operating-system window itself fully mouse-click-through; the browser window frame/surface may still intercept clicks.
-
-
-### v2.5.1 floating HUD
-
-The floating Chrome Picture-in-Picture HUD now shows the four basic live values:
-
-```text
-Cell 633601       -92 dBm
-↑ Upload          ↓ Download
-121 KB/s          523 KB/s
-Cell sample 18s ago
-```
-
-The HUD uses a full-bleed dark background to avoid the visible white page area around the previous card. Upload/download and router signal refresh from the normal live monitor status; Cell ID comes from the locally stored one-minute LTE cell history.
-
-
-### v2.5.2 compact floating HUD
-
-The floating HUD was reduced to a single compact box:
-
-```text
-Cell 633601      -92 dBm
-↑ 121 KB/s | ↓ 523 KB/s
-18s ago
-```
-
-Upload and download now share one line with arrows and a vertical separator. The floating window itself was reduced to approximately `230 × 86` CSS pixels to take up less screen space.
-
-
-### v2.5.3 dark HUD color tuning
-
-The floating HUD now uses softer low-glare text colors instead of bright white on the dark background.
-
-- Primary text: soft blue-gray
-- Upload/download text: muted blue-gray
-- Signal: softer green
-- Timestamp: darker muted gray
-- Metric surface: slightly darker to reduce contrast
-
-This keeps the HUD readable in a dark room without the harsh white-on-black effect.
-
-
----
-
-## Floating Cell HUD access
-
-The compact always-on-top **Cell / Signal / Traffic HUD** can be opened from the extension UI.
-
-Current floating HUD content:
-
-```text
-Cell 633601      -92 dBm
-↑ 121 KB/s | ↓ 523 KB/s
-18s ago
-```
-
-It shows:
-
-- Current LTE Cell ID / ECI from the latest locally stored cell sample.
-- Current router signal strength.
-- Live upload speed.
-- Live download speed.
-- Age of the latest cell sample.
-
-The HUD uses Chrome's Document Picture-in-Picture window so it can remain above normal windows while Chrome is running.
-
-The floating window uses a compact dark, low-glare design and does not make an additional router request just to render the HUD.
-
-### Opening the floating HUD
-
-The **Float Cell** control is available from the Router Monitor interface. The same floating control is intended to be accessible from the extension popup so the user does not need to first open the full Live Monitor page.
-
-Chrome requires a user gesture to create a Document Picture-in-Picture window, so the HUD must be opened by clicking the floating button.
-
-### Browser limitation
-
-The content inside the HUD uses `pointer-events: none`, but Chrome owns the outer Picture-in-Picture window. A pure Chrome extension cannot guarantee operating-system-level mouse click-through for the entire native floating window.
-
-### Local cell history
-
-Cell and signal history is collected once per minute using CMD `186` and stored only in `chrome.storage.local`.
-
-Current stored mapping:
-
-```text
-timestamp
-ISO date/time
-local date/time
-Global Cell ID / ECI
-Global Cell ID hex
-eNodeB ID
-sector/cell ID
-RSRP signal strength
-```
-
-The rolling retention limit is 43,200 samples, approximately 30 days at one sample per minute.
-
-
-### v2.5.4 options floating button
-
-The same **Float Cell** control is now also available from the Options page. It opens the compact always-on-top HUD directly from Options, showing Cell ID, signal, upload and download.
-
-
----
-
-## Cell & Signal History dashboard
-
-Router Monitor stores one local LTE sample per minute in `chrome.storage.local` and now provides a dedicated **Cell & Signal History** page.
-
-Each sample includes:
-
-```text
-timestamp
-Cell ID / ECI
-eNodeB ID
-sector ID
-RSRP signal strength (dBm)
-```
-
-The History page provides:
-
-- 1 hour, 6 hour, 24 hour, 7 day and 30 day views
-- RSRP-over-time line chart
-- different chart color for each Cell ID
-- current cell and latest signal
-- best signal in the selected range
-- average signal
-- per-cell sample count
-- per-cell average / best / worst RSRP
-- last-seen time for every Cell ID
-- manual refresh and local-history clear controls
-
-No external service is required. The chart is rendered locally with the browser Canvas API and the history stays inside the extension's local storage.
-
-
-### v2.6.1 popup Float button
-
-The main Chrome extension popup now contains a **▣ Float** button next to Refresh and Open Monitor.
-
-It launches the same compact floating HUD:
-
-```text
-Cell 633601      -92 dBm
-↑ 121 KB/s | ↓ 523 KB/s
-18s ago
-```
-
-The floating HUD uses Document Picture-in-Picture and keeps the same dark, low-glare styling.
-
-
-### v2.7.0 signal distribution and tower sessions
-
-The Cell & Signal History dashboard now extracts more useful information from the existing one-minute local samples.
-
-For every Cell ID, the dashboard can show exact RSRP-value frequency, for example:
-
-```text
-Cell 633601
--99 dBm   -> 18 samples
--100 dBm  -> 41 samples
--101 dBm  -> 27 samples
--102 dBm  -> 9 samples
-```
-
-Each exact signal row also keeps its first-recorded and last-recorded timestamps.
-
-The dashboard also estimates daily tower connection sessions:
-
-```text
-2026-09-20  Cell 633601
-Connections: 4
-Approx. time: ~2h 18m
-First seen: 07:12
-Last seen: 21:44
-```
-
-A new connection session is counted when the Cell ID changes, the calendar day changes, or there is a gap of more than 2.5 minutes between samples. Connected time is approximate because sampling happens once per minute.
-
-This makes it possible to analyze later how often a tower was used, how long it was used, and which signal values were most common at different times of day.
