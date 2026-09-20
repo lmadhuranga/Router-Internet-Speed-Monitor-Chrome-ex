@@ -20,6 +20,32 @@ The APIs are undocumented and firmware-specific. Do not assume the same request/
 
 ![Dialog ZLT P11 Router Kit](docs/images/dialog-zlt-p11-router-kit.jpg)
 
+
+### Popup Overview
+
+Two popup screenshots combined into a single compressed JPG.
+
+![Router Monitor Popup Overview](docs/screenshots/router-monitor-popup-overview.jpg)
+
+### Live Monitor Overview
+
+Main live-monitor sections combined into a single compressed JPG.
+
+![Router Monitor Live Monitor Overview](docs/screenshots/router-monitor-live-monitor-overview.jpg)
+
+### Cell & Signal History Overview
+
+History chart and analytics tables combined into a single compressed JPG.
+
+![Router Monitor History Overview](docs/screenshots/router-monitor-history-overview.jpg)
+
+### Floating HUD
+
+Compact always-on-top floating window preview.
+
+![Router Monitor Floating HUD](docs/screenshots/router-monitor-floating-hud.jpg)
+
+
 ## Main Features
 
 ### Live Router Monitoring
@@ -445,34 +471,7 @@ docs/screenshots/router-monitor-history-overview.jpg
 docs/screenshots/router-monitor-floating-hud.jpg
 ```
 
-### Router Kit
-
-![Dialog ZLT P11 Router Kit](docs/images/dialog-zlt-p11-router-kit.jpg)
-
-### Popup Overview
-
-Two popup screenshots combined into a single compressed JPG.
-
-![Router Monitor Popup Overview](docs/screenshots/router-monitor-popup-overview.jpg)
-
-### Live Monitor Overview
-
-Main live-monitor sections combined into a single compressed JPG.
-
-![Router Monitor Live Monitor Overview](docs/screenshots/router-monitor-live-monitor-overview.jpg)
-
-### Cell & Signal History Overview
-
-History chart and analytics tables combined into a single compressed JPG.
-
-![Router Monitor History Overview](docs/screenshots/router-monitor-history-overview.jpg)
-
-### Floating HUD
-
-Compact always-on-top floating window preview.
-
-![Router Monitor Floating HUD](docs/screenshots/router-monitor-floating-hud.jpg)
-
+ 
 ## Postman Collection
 
 An importable Postman collection is included:
