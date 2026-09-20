@@ -11,8 +11,9 @@
   </div>
   <div class="header-actions">
     <span id="statusPill" class="pill">Connecting</span>
-    <button id="pauseMonitorBtn" class="pause-monitor-btn">Pause</button>
     <button id="themeBtn" class="theme-btn" title="Toggle theme" aria-label="Toggle theme">☾</button>
+    <button id="historyBtn" title="View local cell and signal history">⌁ History</button>
+    <button id="floatCellBtn" class="float-cell-btn" title="Open always-on-top cell signal window">▣ Float Cell</button>
     <button id="settingsBtn">⚙ Settings</button>
   </div>
 </header>
@@ -22,6 +23,41 @@
 <article><span>▥ Signal</span><strong id="signal">-- <small>dBm</small></strong></article>
 <article><span>⌁ Wi-Fi</span><strong id="wifi">--</strong></article>
 </section>
+
+<section class="panel cell-summary-panel">
+  <div class="panel-heading">
+    <div>
+      <h2>Current Cell & Signal</h2>
+      <p>Latest locally recorded LTE cell-to-signal mapping.</p>
+    </div>
+    <span id="cellSampleAge" class="count-badge">Waiting for sample…</span>
+  </div>
+
+  <div class="cell-summary-grid">
+    <div class="cell-summary-item">
+      <span>Cell ID / ECI</span>
+      <strong id="currentCellId">--</strong>
+    </div>
+    <div class="cell-summary-item">
+      <span>Signal Strength</span>
+      <strong id="currentCellSignal">-- <small>dBm</small></strong>
+    </div>
+    <div class="cell-summary-item">
+      <span>eNodeB</span>
+      <strong id="currentENodeB">--</strong>
+    </div>
+    <div class="cell-summary-item">
+      <span>Sector</span>
+      <strong id="currentSector">--</strong>
+    </div>
+  </div>
+
+  <div id="cellSignalSentence" class="cell-signal-sentence">
+    Waiting for the first cell signal sample.
+  </div>
+  <div id="cellSignalTime" class="cell-signal-time">--</div>
+</section>
+
 <section class="panel wifi-panel">
 <div class="panel-heading">
   <div><h2>Wi-Fi Visibility</h2><p>Control whether the SSID is visible or hidden.</p></div>

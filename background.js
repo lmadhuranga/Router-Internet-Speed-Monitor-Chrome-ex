@@ -1,7 +1,8 @@
-importScripts("core.js", "storage.js");
+importScripts("core.js", "storage.js", "cell-history.js");
 
 const Core = RouterCore;
 const Store = RouterStorage;
+const CellHistory = RouterCellHistory;
 const storage = chrome.storage.local;
 
 let settings = { ...Core.DEFAULT_SETTINGS };
@@ -12,7 +13,10 @@ let isAuthenticating = false;
 let isWifiRequestRunning = false;
 let refreshTimer = null;
 let deviceScanTimer = null;
+let lastStableConnectionState = null;
 const EXTENSION_PAUSE_ALARM = "router-monitor-resume";
+const CELL_HISTORY_ALARM = "router-monitor-cell-history";
+const CELL_HISTORY_STORAGE_KEY = "cellSignalHistory";
 let extensionPausedUntil = null;
 
 let previousCounters = null;
@@ -63,7 +67,7 @@ function getHeaders() {
   };
 }
 
-async function routerRequest(payload, timeoutMs = 5000) {
+async function routerRequest(payload, timeoutMs = 5000, allowEmpty = false) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -77,7 +81,7 @@ async function routerRequest(payload, timeoutMs = 5000) {
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const text = await response.text();
-    if (!text) throw new Error("Empty router response");
+    if (!text && !allowEmpty) throw new Error("Empty router response");
     return text;
   } catch (error) {
     if (error && error.name === "AbortError") throw new Error("Router request timed out");
@@ -120,12 +124,20 @@ async function authenticate() {
   }
 }
 
-async function routerRequestWithAuth(payload) {
-  let response = await routerRequest(payload);
+async function routerRequestWithAuth(payload, { allowEmpty = false } = {}) {
+  let response = await routerRequest(payload, 5000, allowEmpty);
+
+  // An empty body is a valid success only for commands where the caller
+  // explicitly opted into allowEmpty (currently CMD 20).
+  if (allowEmpty && response === "") return response;
+
   if (!isSessionInvalid(response)) return response;
   if (!(await authenticate())) throw new Error("AUTHENTICATION_FAILED");
+
   payload.sessionId = sessionId;
-  response = await routerRequest(payload);
+  response = await routerRequest(payload, 5000, allowEmpty);
+
+  if (allowEmpty && response === "") return response;
   if (isSessionInvalid(response)) throw new Error("SESSION_EXPIRED");
   return response;
 }
@@ -266,6 +278,7 @@ async function setExtensionPause(until) {
     extensionPausedUntil = "indefinite";
     await storage.set({ extensionPausedUntil: "indefinite" });
     await chrome.alarms.clear(EXTENSION_PAUSE_ALARM);
+    setPausedBadge();
     return { success: true, paused: true, until: "indefinite" };
   }
 
@@ -277,6 +290,7 @@ async function setExtensionPause(until) {
   extensionPausedUntil = timestamp;
   await storage.set({ extensionPausedUntil: timestamp });
   await chrome.alarms.create(EXTENSION_PAUSE_ALARM, { when: timestamp });
+  setPausedBadge();
   return { success: true, paused: true, until: timestamp };
 }
 
@@ -284,6 +298,9 @@ async function resumeExtension() {
   extensionPausedUntil = null;
   await storage.remove(["extensionPausedUntil"]);
   await chrome.alarms.clear(EXTENSION_PAUSE_ALARM);
+  chrome.action.setBadgeText({text:"..."});
+  chrome.action.setBadgeBackgroundColor({color:"#475569"});
+  chrome.action.setTitle({title:"Router Monitor — Reconnecting"});
   try { await refreshRouter(); } catch (_) {}
   return { success: true, paused: false, until: null };
 }
@@ -303,8 +320,77 @@ function pausedStatusPayload() {
     speed: { downloadKB: 0, uploadKB: 0, downloadMbps: 0, uploadMbps: 0 },
     router: null,
     wifi: null,
-    settings: currentSettings || {}
+    settings: { ...settings }
   };
+}
+
+
+async function getCellDiagnostics() {
+  const response = await routerRequestWithAuth({
+    method: "POST",
+    cmd: 186,
+    atcmd: [
+      "AT+TZRSRP?",
+      "AT+TZGLBCELLID?"
+    ],
+    language: "EN",
+    sessionId
+  });
+
+  const data = tryParseJSON(response);
+  if (!data) throw new Error("Invalid CMD 186 JSON response");
+  return CellHistory.parseDiagnosticsResponse(data);
+}
+
+async function saveCellSignalSample() {
+  if (isExtensionPaused()) return { success:false, skipped:"paused" };
+  if (routerStatus !== "connected" || isAuthenticating) {
+    return { success:false, skipped:"router_not_connected" };
+  }
+
+  const parsed = await getCellDiagnostics();
+  const sample = CellHistory.createSample(parsed, Date.now());
+  const stored = await storage.get([CELL_HISTORY_STORAGE_KEY]);
+  const history = CellHistory.appendHistory(
+    stored[CELL_HISTORY_STORAGE_KEY],
+    sample
+  );
+
+  await storage.set({
+    [CELL_HISTORY_STORAGE_KEY]: history,
+    latestCellSignalSample: sample
+  });
+
+  return { success:true, sample, count:history.length };
+}
+
+async function getCellSignalHistory(limit = 1440) {
+  const stored = await storage.get([CELL_HISTORY_STORAGE_KEY, "latestCellSignalSample"]);
+  const history = Array.isArray(stored[CELL_HISTORY_STORAGE_KEY])
+    ? stored[CELL_HISTORY_STORAGE_KEY]
+    : [];
+  const requested = Math.max(1, Math.min(Number(limit) || 1440, CellHistory.MAX_HISTORY_ENTRIES));
+
+  return {
+    success:true,
+    latest: stored.latestCellSignalSample || history.at(-1) || null,
+    history: history.slice(-requested),
+    total: history.length
+  };
+}
+
+async function clearCellSignalHistory() {
+  await storage.remove([CELL_HISTORY_STORAGE_KEY, "latestCellSignalSample"]);
+  return { success:true };
+}
+
+async function ensureCellHistoryAlarm() {
+  const existing = await chrome.alarms.get(CELL_HISTORY_ALARM);
+  if (!existing) {
+    await chrome.alarms.create(CELL_HISTORY_ALARM, {
+      periodInMinutes: 1
+    });
+  }
 }
 
 async function getDeviceRegistry() {
@@ -336,6 +422,7 @@ async function notifyNewDevice(device) {
     // Notification may be unavailable if Chrome has disabled extension notifications.
   }
 }
+
 
 async function getConnectedDevices({ updateRegistry = true, notify = false } = {}) {
   const response = await routerRequestWithAuth({
@@ -465,7 +552,7 @@ function scheduleDeviceScan() {
   deviceScanTimer = setTimeout(async () => {
     await scanDevicesForAlerts();
     scheduleDeviceScan();
-  }, 15000);
+  }, 30000);
 }
 
 function getStatus() {
@@ -495,11 +582,95 @@ function updateBadge() {
   chrome.action.setBadgeText({ text });
   const sig = Core.signalDisplay(router.rssi);
   chrome.action.setBadgeBackgroundColor({ color: sig.quality === "good" ? "#16a34a" : sig.quality === "weak" ? "#b91c1c" : "#475569" });
+  chrome.action.setTitle({title:"Router Monitor — Connected"});
+}
+
+
+async function ensureAudioOffscreenDocument() {
+  const offscreenUrl = chrome.runtime.getURL("offscreen.html");
+
+  if (chrome.runtime.getContexts) {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
+      documentUrls: [offscreenUrl]
+    });
+    if (contexts.length) return;
+  }
+
+  try {
+    await chrome.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["AUDIO_PLAYBACK"],
+      justification: "Play a single audible alert when the router disconnects or reconnects."
+    });
+  } catch (error) {
+    // Ignore "already exists" races; sending the message below will still work.
+    if (!String(error?.message || error).toLowerCase().includes("single offscreen")) {
+      throw error;
+    }
+  }
+}
+
+async function playConnectionBell(kind) {
+  try {
+    await ensureAudioOffscreenDocument();
+    await chrome.runtime.sendMessage({
+      type: "playConnectionBell",
+      kind
+    });
+  } catch (_) {
+    // Audio alerts must never break router monitoring.
+  }
+}
+
+async function showConnectionNotification(connected) {
+  try {
+    await chrome.notifications.create(
+      connected ? "router-monitor-connected" : "router-monitor-disconnected",
+      {
+        type: "basic",
+        iconUrl: "icon128.png",
+        title: connected ? "Router connected" : "Router disconnected",
+        message: connected
+          ? "Connection to the router has been restored."
+          : "Router Monitor can no longer reach the router.",
+        priority: connected ? 1 : 2
+      }
+    );
+  } catch (_) {}
+}
+
+async function updateStableConnectionState(connected) {
+  // Do not alert on extension startup. Establish the initial baseline first.
+  if (lastStableConnectionState === null) {
+    lastStableConnectionState = connected;
+    return;
+  }
+
+  if (lastStableConnectionState === connected) return;
+
+  lastStableConnectionState = connected;
+
+  await Promise.all([
+    playConnectionBell(connected ? "connected" : "disconnected"),
+    showConnectionNotification(connected)
+  ]);
+}
+
+function setPausedBadge() {
+  chrome.action.setBadgeText({text:"II"});
+  chrome.action.setBadgeBackgroundColor({color:"#d97706"});
+  chrome.action.setTitle({title:"Router Monitor — Paused"});
+}
+
+function setOfflineBadge() {
+  chrome.action.setBadgeText({text:"OFF"});
+  chrome.action.setBadgeBackgroundColor({color:"#b91c1c"});
+  chrome.action.setTitle({title:"Router Monitor — Offline"});
 }
 
 function setErrorBadge() {
-  chrome.action.setBadgeText({text:"!"});
-  chrome.action.setBadgeBackgroundColor({color:"#b91c1c"});
+  setOfflineBadge();
 }
 
 async function refreshRouter() {
@@ -509,10 +680,12 @@ async function refreshRouter() {
   try {
     await getRouterInformation();
     routerStatus = "connected";
+    await updateStableConnectionState(true);
   } catch (error) {
     resetSpeed();
     routerStatus = error.message === "AUTHENTICATION_FAILED" ? "authentication_failed" : "server_error";
     setErrorBadge();
+    await updateStableConnectionState(false);
   } finally {
     isRefreshing = false;
   }
@@ -543,6 +716,7 @@ async function reloadSettings() {
   settings = await Store.getSettings(storage);
   sessionId = "";
   resetSpeed();
+  lastStableConnectionState = null;
   scheduleRefresh();
 }
 
@@ -561,6 +735,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "getWifiVisibility": return await getWifiVisibility();
       case "setWifiVisibility": return await setWifiVisibility(message.broadcast);
       case "getConnectedDevices": return await getConnectedDevices({ updateRegistry:true, notify:false });
+      case "getCellSignalHistory": return await getCellSignalHistory(message.limit);
+      case "collectCellSignalSample": return await saveCellSignalSample();
+      case "clearCellSignalHistory": return await clearCellSignalHistory();
       case "renameDevice": return await renameDevice(message.mac, message.alias);
       case "setDeviceTrusted": return await setDeviceTrusted(message.mac, message.trusted !== false);
       case "clearDeviceNewFlag": return await clearDeviceNewFlag(message.mac);
@@ -583,14 +760,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   chrome.action.setBadgeBackgroundColor({color:"#475569"});
   settings = await Store.initializeSettings(storage);
   settings = await Store.getSettings(storage);
-  await getExtensionPauseState();
+  const pauseState = await getExtensionPauseState();
+  if (pauseState.paused) setPausedBadge();
   scheduleRefresh();
   scheduleDeviceScan();
-  refreshRouter();
+  await ensureCellHistoryAlarm();
+  await refreshRouter();
+  try { await saveCellSignalSample(); } catch (_) {}
 })();
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === EXTENSION_PAUSE_ALARM) {
     await resumeExtension();
+    return;
+  }
+
+  if (alarm.name === CELL_HISTORY_ALARM) {
+    try { await saveCellSignalSample(); } catch (_) {}
   }
 });

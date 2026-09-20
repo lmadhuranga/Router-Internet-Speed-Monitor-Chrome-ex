@@ -54,32 +54,46 @@
       </div>
       <button id="wifiToggleBtn" class="wide secondary" disabled>Checking Wi-Fi…</button>
     </section>
-    <div class="button-row">
+
+    <section class="pause-card">
+      <div class="pause-copy">
+        <strong>Monitoring</strong>
+        <small id="pauseStatus">Checking monitoring state…</small>
+      </div>
+
+      <div class="pause-actions">
+        <button id="pauseMenuBtn" class="wide secondary">⏸ Pause Monitoring</button>
+        <button id="resumeBtn" class="wide primary hidden">▶ Enable Monitoring</button>
+
+        <div id="pauseMenu" class="pause-menu hidden">
+          <button type="button" data-pause="1h">Pause for 1 hour</button>
+          <button type="button" data-pause="8h">Pause for 8 hours</button>
+          <button type="button" data-pause="tomorrow">Pause until tomorrow 8:00 AM</button>
+          <button type="button" data-pause="indefinite">Pause until I enable it</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="button-row popup-main-actions">
+      <button id="floatCellBtn" class="wide secondary">▣ Float</button>
       <button id="refreshBtn" class="wide secondary">↻ Refresh</button>
       <button id="openMonitorBtn" class="wide primary">Open Monitor ↗</button>
     </div>
 
     <div id="errorMessage" class="error hidden"></div>
-    <footer><span id="refreshText">Live update: 1s</span><span>v2.0.0</span></footer>
-  
-    <section class="pause-card">
-      <div class="pause-copy">
-        <strong>Monitor Power</strong>
-        <small id="pauseStatus">Running normally</small>
-      </div>
-      <div class="pause-actions">
-        <button id="pauseMenuBtn" class="wide secondary">Pause Monitor</button>
-        <div id="pauseMenu" class="pause-menu hidden">
-          <button data-pause="1h">Pause 1 hour</button>
-          <button data-pause="8h">Pause 8 hours</button>
-          <button data-pause="tomorrow">Pause until tomorrow</button>
-          <button data-pause="indefinite">Pause until I enable it</button>
-        </div>
-        <button id="resumeBtn" class="wide primary hidden">Resume Monitor</button>
-      </div>
-    </section>
 
-</main>
+    <div id="stateOverlay" class="state-overlay hidden" role="dialog" aria-modal="true" aria-live="polite">
+      <div class="state-overlay-card">
+        <div id="overlayIcon" class="state-overlay-icon">⏸</div>
+        <h2 id="overlayTitle">Monitoring paused</h2>
+        <p id="overlayMessage">Router monitoring is currently paused.</p>
+        <button id="overlayPrimaryBtn" class="wide primary">▶ Enable Monitoring</button>
+        <button id="overlaySecondaryBtn" class="wide secondary hidden">Open Settings</button>
+      </div>
+    </div>
+
+    <footer><span id="refreshText">Live update: 1s</span><span>v2.6.1</span></footer>
+  </main>
   <script src="core.js"></script>
   <script src="popup.js"></script>
 </body>

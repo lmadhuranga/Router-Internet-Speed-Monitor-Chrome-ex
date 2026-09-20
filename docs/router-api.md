@@ -43,6 +43,7 @@ Do not commit real router passwords, password hashes, active session IDs, cookie
 | `117` | `GET` | Read Wi-Fi configuration / SSID visibility |
 | `117` | `POST` | Update Wi-Fi configuration / SSID visibility |
 | `121` | `GET` | DHCP client / device list |
+| `186` | `POST` | LTE radio / cell diagnostics |
 | `23` | `POST` | Save complete IPv4/IPv6 MAC access-rule list |
 | `20` | `POST` | Apply / commit access-rule changes |
 
@@ -186,7 +187,54 @@ This appears to be a DHCP client/lease list, so recently disconnected devices ma
 
 ---
 
-## CMD 23 — Save MAC access rules
+## CMD 23 — MAC access rules
+
+### Read current access rules
+
+Request:
+
+```json
+{
+  "cmd": 23,
+  "method": "GET",
+  "language": "EN",
+  "sessionId": "<CURRENT_SESSION_ID>"
+}
+```
+
+Verified response shape:
+
+```json
+{
+  "cmd": 23,
+  "method": "POST",
+  "success": true,
+  "datas": [
+    {
+      "enableRule": true,
+      "enableLink": false,
+      "remark": "Example IPv4 rule",
+      "ippro": "IPV4",
+      "mac": "AA:BB:CC:DD:EE:FF"
+    }
+  ]
+}
+```
+
+The request uses `method: GET`, but this firmware may return `method: POST` in the saved configuration object.
+
+Use `MAC + ippro` to match a device rule:
+
+```text
+enableRule = true + enableLink = false -> blocked
+enableRule = true + enableLink = true  -> allowed
+missing rule                            -> no rule
+```
+
+Router Monitor currently manages device blocking with `IPV4` rules only. It preserves all other existing rules, saves the updated full rule list with CMD 23 POST, applies it with CMD 20, then reads CMD 23 again to verify the IPv4 state.
+
+
+### Save / update rules
 
 CMD `23` saves the complete desired access-rule list.
 
@@ -367,3 +415,69 @@ Retry original request
 - The same physical device can therefore sometimes appear under a different MAC address.
 - CMD `121` should be treated as a DHCP client/lease list rather than a guaranteed real-time online-device list.
 - Avoid storing active session IDs or cookies in documentation or public source control.
+
+
+### Router Monitor unblock behavior
+
+For the current IPv4-only implementation:
+
+- **Block:** keep/add the device's `IPV4` rule with `enableRule=true` and `enableLink=false`.
+- **Unblock:** remove that device's `IPV4` rule from the complete `datas` array.
+- Send the complete remaining rule list with CMD 23 POST.
+- After a successful response, send CMD 20 POST to apply.
+- Read CMD 23 again and verify the device's IPv4 rule is absent.
+
+This uses the already-verified delete-by-omission behavior of CMD 23.
+
+
+---
+
+## CMD 186 — LTE cell / signal diagnostics
+
+The extension uses CMD `186` once per minute to map the active LTE cell to signal strength.
+
+Current lightweight history request:
+
+```json
+{
+  "method": "POST",
+  "cmd": 186,
+  "atcmd": [
+    "AT+TZRSRP?",
+    "AT+TZGLBCELLID?"
+  ],
+  "language": "EN",
+  "sessionId": "<CURRENT_SESSION_ID>"
+}
+```
+
+Stored mapping:
+
+```text
+date/time
+Global Cell ID / ECI
+eNodeB ID = ECI >> 8
+sector/cell ID = ECI & 255
+RSRP signal strength in dBm
+```
+
+Observed example:
+
+```text
+Global Cell ID / ECI: 633601
+ECI hex:              0x0009ab01
+eNodeB ID:            2475
+sector/cell ID:       1
+RSRP:                 -104 dBm
+```
+
+History collection:
+
+```text
+frequency: once per minute
+storage:   chrome.storage.local
+external upload: none
+retention: rolling 43,200 samples (~30 days)
+```
+
+Collection is skipped while Router Monitor itself is paused or while the router is not connected/authenticated.

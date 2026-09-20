@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cell & Signal History | Router Monitor</title>
+  <link rel="stylesheet" href="history.css">
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <div>
+      <p class="eyebrow">ROUTER MONITOR</p>
+      <h1>Cell & Signal History</h1>
+      <p class="subtitle">Local one-minute LTE cell and RSRP history.</p>
+    </div>
+    <div class="header-actions">
+      <button id="refreshBtn">↻ Refresh</button>
+      <button id="clearBtn" class="danger">Clear history</button>
+    </div>
+  </header>
+
+  <section class="panel controls">
+    <div class="range-group" role="group" aria-label="History range">
+      <button class="range-btn" data-range="60">1 hour</button>
+      <button class="range-btn" data-range="360">6 hours</button>
+      <button class="range-btn active" data-range="1440">24 hours</button>
+      <button class="range-btn" data-range="10080">7 days</button>
+      <button class="range-btn" data-range="43200">30 days</button>
+    </div>
+    <span id="sampleCount" class="badge">0 samples</span>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Current cell</span>
+      <strong id="currentCell">--</strong>
+      <small id="currentCellMeta">No data</small>
+    </article>
+    <article class="summary-card">
+      <span>Latest signal</span>
+      <strong id="latestSignal">-- dBm</strong>
+      <small id="latestSignalTime">No data</small>
+    </article>
+    <article class="summary-card">
+      <span>Best signal</span>
+      <strong id="bestSignal">-- dBm</strong>
+      <small id="bestSignalCell">No data</small>
+    </article>
+    <article class="summary-card">
+      <span>Average signal</span>
+      <strong id="averageSignal">-- dBm</strong>
+      <small id="averageSignalMeta">No data</small>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Signal strength over time</h2>
+        <p>RSRP in dBm. Higher (less negative) values are stronger.</p>
+      </div>
+      <div id="chartLegend" class="legend"></div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="signalChart" width="1000" height="360"></canvas>
+      <div id="emptyChart" class="empty hidden">No cell/signal history in this range yet.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Cell summary</h2>
+        <p>How each Cell ID performed in the selected time range.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cell ID</th>
+            <th>Samples</th>
+            <th>Average</th>
+            <th>Best</th>
+            <th>Worst</th>
+            <th>Last seen</th>
+          </tr>
+        </thead>
+        <tbody id="cellSummaryBody">
+          <tr><td colspan="6" class="empty-cell">No data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Signal value distribution by cell</h2>
+        <p>Exact RSRP values and how many one-minute samples were recorded at each value.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cell ID</th>
+            <th>Signal</th>
+            <th>Times recorded</th>
+            <th>First recorded</th>
+            <th>Last recorded</th>
+          </tr>
+        </thead>
+        <tbody id="signalDistributionBody">
+          <tr><td colspan="5" class="empty-cell">No data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Tower connection sessions</h2>
+        <p>Estimated connection sessions derived from consecutive one-minute samples.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Cell ID</th>
+            <th>Connections</th>
+            <th>Approx. time</th>
+            <th>First seen</th>
+            <th>Last seen</th>
+          </tr>
+        </thead>
+        <tbody id="towerSessionsBody">
+          <tr><td colspan="6" class="empty-cell">No data</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="session-note">A new session starts when the Cell ID changes or when the gap between samples is more than 2.5 minutes. Approximate connected time is based on one-minute samples.</p>
+  </section>
+
+  <div id="error" class="error hidden"></div>
+</main>
+<script src="history.js"></script>
+</body>
+</html>

@@ -292,6 +292,54 @@
       "name": "Access Rules",
       "item": [
         {
+          "name": "CMD 23 - Read Current Access Rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 23,\n  \"method\": \"GET\",\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Reads the current IPv4/IPv6 MAC access-rule list."
+          }
+        },
+        {
           "name": "CMD 23 - Save IPv4 + IPv6 Access Rules",
           "request": {
             "method": "POST",

@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Router Monitor",
-  "version": "2.1.1",
+  "version": "2.7.0",
   "description": "Monitor speed, signal strength and Wi-Fi visibility on the Dialog ZLT P11 Outdoor LTE CPE.",
   "permissions": [
     "storage",
     "notifications",
-    "alarms"
+    "alarms",
+    "offscreen"
   ],
   "host_permissions": [
     "http://192.168.8.1/*"
@@ -31,5 +32,6 @@
   },
   "icons": {
     "128": "icon128.png"
-  }
+  },
+  "minimum_chrome_version": "124"
 }

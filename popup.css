@@ -13,3 +13,19 @@
 .pause-menu{display:grid;gap:6px;margin-top:8px;padding:8px;border:1px solid var(--border);background:var(--surface);border-radius:11px}
 .pause-menu button{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:9px;padding:9px 10px;text-align:left;cursor:pointer}
 .hidden{display:none!important}
+
+
+.popup{position:relative;overflow:hidden}
+.popup.state-dimmed > :not(.state-overlay){filter:blur(1.5px);opacity:.28;pointer-events:none;user-select:none;transition:opacity .18s ease,filter .18s ease}
+.state-overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(3,8,14,.58);backdrop-filter:blur(3px)}
+body.light .state-overlay{background:rgba(232,239,245,.66)}
+.state-overlay-card{width:100%;max-width:304px;padding:24px 20px;border:1px solid var(--border);border-radius:18px;background:var(--surface);box-shadow:0 24px 70px rgba(0,0,0,.48);text-align:center}
+.state-overlay-icon{width:58px;height:58px;margin:0 auto 13px;border-radius:18px;display:grid;place-items:center;font-size:27px;background:rgba(255,102,115,.12);color:var(--red);border:1px solid rgba(255,102,115,.28)}
+.state-overlay-card h2{margin:0;font-size:19px}
+.state-overlay-card p{margin:8px 0 18px;color:var(--muted);font-size:12px;line-height:1.5}
+.state-overlay-card .wide{width:100%;margin-top:8px}
+.state-overlay.paused .state-overlay-icon{background:rgba(251,191,36,.12);color:#fbbf24;border-color:rgba(251,191,36,.3)}
+.state-overlay.offline .state-overlay-icon{background:rgba(255,102,115,.12);color:var(--red)}
+
+.popup-main-actions{grid-template-columns:.8fr .8fr 1.35fr}
+.popup-main-actions .wide{padding-left:8px;padding-right:8px;font-size:11px;white-space:nowrap}

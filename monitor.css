@@ -44,3 +44,25 @@
 .pause-choice-row button,.pause-monitor-btn{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
 .pause-panel.paused{border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07)}
 .hidden{display:none!important}
+
+
+
+
+
+
+
+
+
+
+.cell-summary-panel{overflow:hidden}
+.cell-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.cell-summary-item{padding:14px;border:1px solid var(--border);background:var(--surface2);border-radius:13px}
+.cell-summary-item span{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+.cell-summary-item strong{font-size:20px;line-height:1.2}
+.cell-summary-item small{font-size:11px;color:var(--muted)}
+.cell-signal-sentence{margin-top:14px;padding:14px 16px;border-radius:13px;background:rgba(62,232,121,.08);border:1px solid rgba(62,232,121,.22);font-size:14px;font-weight:750;line-height:1.5}
+.cell-signal-time{margin-top:8px;color:var(--muted);font-size:11px}
+@media(max-width:760px){.cell-summary-grid{grid-template-columns:1fr 1fr}}
+
+.float-cell-btn{cursor:pointer;font-weight:750}
+.float-cell-btn:disabled{opacity:.65;cursor:default}

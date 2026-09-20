@@ -1,5 +1,9 @@
 const $=id=>document.getElementById(id);
 let refreshMs=1000;
+const DEVICE_REFRESH_MS=30000;
+let cellPipWindow=null;
+let latestCellSample=null;
+let latestMonitorStatus=null;
 
 function setTheme(theme){
   const normalized = RouterCore.sanitizeTheme(theme);
@@ -20,6 +24,7 @@ async function toggleTheme(){
 function showError(msg){$("error").textContent=msg;$("error").classList.remove("hidden");}
 function hideError(){$("error").classList.add("hidden");}
 function apply(s){
+  latestMonitorStatus = s || null;
   const speedUnit = RouterCore.sanitizeSpeedUnit(s?.settings?.speedUnit);
   document.title=RouterCore.buildLiveTitle(s, speedUnit);
   const connected=s?.status==="connected";
@@ -48,6 +53,7 @@ function apply(s){
   $("uptime").textContent=s?.router?.uptime||"--";
   $("ssid").textContent=s?.wifi?.ssid||"--";
   if(s?.settings){setTheme(s.settings.theme);refreshMs=RouterCore.sanitizeRefreshInterval(s.settings.refreshInterval);}
+  updateCellPipContent();
 }
 
 async function toggleWifiVisibility(){
@@ -81,6 +87,9 @@ function escapeHtml(value){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
+
+
+
 
 function renderDevices(result){
   const list=$("devicesList");
@@ -167,6 +176,251 @@ function renderDevices(result){
   }));
 }
 
+
+function formatSampleTime(sample){
+  if(!sample) return "--";
+  const timestamp = Number(sample.timestamp);
+  if(!Number.isFinite(timestamp)) return sample.localTime || sample.isoTime || "--";
+  return new Date(timestamp).toLocaleString();
+}
+
+function sampleAgeLabel(sample){
+  const timestamp = Number(sample?.timestamp);
+  if(!Number.isFinite(timestamp)) return "Latest sample";
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if(seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if(minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
+
+
+function cellSignalQuality(rsrp){
+  const n = Number(rsrp);
+  if(!Number.isFinite(n)) return {label:"Unknown", className:"unknown"};
+  if(n >= -90) return {label:"Excellent", className:"excellent"};
+  if(n >= -100) return {label:"Good", className:"good"};
+  if(n >= -110) return {label:"Fair", className:"fair"};
+  return {label:"Weak", className:"weak"};
+}
+
+function updateCellPipContent(sample=latestCellSample){
+  if(!cellPipWindow || cellPipWindow.closed) return;
+
+  const doc = cellPipWindow.document;
+  const cell = doc.getElementById("pipCellId");
+  const signal = doc.getElementById("pipSignal");
+  const traffic = doc.getElementById("pipTraffic");
+  const time = doc.getElementById("pipTime");
+
+  if(!cell || !signal || !traffic || !time) return;
+
+  const status = latestMonitorStatus;
+  const speedUnit = RouterCore.sanitizeSpeedUnit(status?.settings?.speedUnit);
+
+  let uploadText;
+  let downloadText;
+
+  if(speedUnit === "Mbps"){
+    uploadText = `${RouterCore.formatMbps(status?.speed?.uploadMbps)} Mbps`;
+    downloadText = `${RouterCore.formatMbps(status?.speed?.downloadMbps)} Mbps`;
+  }else{
+    uploadText = `${RouterCore.formatKB(status?.speed?.uploadKB)} KB/s`;
+    downloadText = `${RouterCore.formatKB(status?.speed?.downloadKB)} KB/s`;
+  }
+
+  traffic.textContent = `↑ ${uploadText}  |  ↓ ${downloadText}`;
+
+  const routerSignal = RouterCore.signalDisplay(status?.router?.rssi).value;
+  signal.textContent = routerSignal === "--" ? "-- dBm" : `${routerSignal} dBm`;
+
+  if(!sample){
+    cell.textContent = "Cell --";
+    time.textContent = "Waiting for cell sample";
+    return;
+  }
+
+  cell.textContent = `Cell ${sample.globalCellId ?? "--"}`;
+  time.textContent = sampleAgeLabel(sample);
+}
+function buildCellPipDocument(pipWindow){
+  const doc = pipWindow.document;
+  doc.title = "Router Monitor";
+
+  const style = doc.createElement("style");
+  style.textContent = `
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#07111b;
+      color:#c6d3df;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    body{display:block}
+    .hud{
+      width:100%;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:5px;
+      padding:8px 10px;
+      background:#07111b;
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      min-width:0;
+    }
+    .cell,.signal{
+      font-size:12px;
+      font-weight:850;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .signal{color:#78c99a}
+    .traffic{
+      font-size:11px;
+      font-weight:800;
+      color:#b9c8d6;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .time{
+      color:#7f93a6;
+      font-size:9px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+  `;
+  doc.head.appendChild(style);
+
+  const hud = doc.createElement("div");
+  hud.className = "hud";
+  hud.innerHTML = `
+    <div class="row">
+      <div id="pipCellId" class="cell">Cell --</div>
+      <div id="pipSignal" class="signal">-- dBm</div>
+    </div>
+    <div id="pipTraffic" class="traffic">↑ 0 KB/s  |  ↓ 0 KB/s</div>
+    <div id="pipTime" class="time">Waiting for cell sample</div>
+  `;
+  doc.body.appendChild(hud);
+}
+async function openCellFloatingWindow(){
+  const btn = $("floatCellBtn");
+  if(!btn) return;
+
+  if(!("documentPictureInPicture" in window)){
+    showError("Always-on-top floating window requires Chrome 116 or later.");
+    return;
+  }
+
+  if(documentPictureInPicture.window){
+    documentPictureInPicture.window.focus();
+    cellPipWindow = documentPictureInPicture.window;
+    updateCellPipContent();
+    return;
+  }
+
+  const previous = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Opening…";
+
+  try{
+    const pipWindow = await documentPictureInPicture.requestWindow({
+      width: 230,
+      height: 86,
+      disallowReturnToOpener: true,
+      preferInitialWindowPlacement: false
+    });
+
+    cellPipWindow = pipWindow;
+    buildCellPipDocument(pipWindow);
+    updateCellPipContent();
+
+    pipWindow.addEventListener("pagehide",()=>{
+      cellPipWindow = null;
+      if(btn){
+        btn.disabled = false;
+        btn.textContent = "▣ Float Cell";
+      }
+    },{once:true});
+
+    hideError();
+  }catch(error){
+    showError(error?.message || "Unable to open floating cell window.");
+  }finally{
+    if(!cellPipWindow && btn){
+      btn.disabled = false;
+      btn.textContent = previous;
+    }else if(btn){
+      btn.disabled = false;
+      btn.textContent = "▣ Floating";
+    }
+  }
+}
+
+function renderCellSignalSummary(result){
+  const sample = result?.latest || null;
+  latestCellSample = sample;
+  updateCellPipContent(sample);
+
+  if(!sample){
+    $("currentCellId").textContent = "--";
+    $("currentCellSignal").innerHTML = `-- <small>dBm</small>`;
+    $("currentENodeB").textContent = "--";
+    $("currentSector").textContent = "--";
+    $("cellSignalSentence").textContent = "Waiting for the first cell signal sample.";
+    $("cellSignalTime").textContent = "--";
+    $("cellSampleAge").textContent = "Waiting for sample…";
+    return;
+  }
+
+  const cellId = sample.globalCellId ?? "--";
+  const rsrp = Number(sample.rsrpDbm);
+  const signalText = Number.isFinite(rsrp) ? `${rsrp}` : "--";
+
+  $("currentCellId").textContent = String(cellId);
+  $("currentCellSignal").innerHTML = `${signalText} <small>dBm</small>`;
+  $("currentENodeB").textContent = sample.eNodeBId ?? "--";
+  $("currentSector").textContent = sample.sectorId ?? "--";
+  $("cellSignalTime").textContent = `Recorded ${formatSampleTime(sample)}`;
+  $("cellSampleAge").textContent = sampleAgeLabel(sample);
+
+  if(Number.isFinite(rsrp) && cellId !== "--"){
+    $("cellSignalSentence").textContent =
+      `Cell ID ${cellId} is currently mapped to a signal strength of ${rsrp} dBm.`;
+  }else{
+    $("cellSignalSentence").textContent =
+      `Latest recorded cell ID: ${cellId}.`;
+  }
+}
+
+async function loadCellSignalSummary(){
+  try{
+    const result = await chrome.runtime.sendMessage({
+      type:"getCellSignalHistory",
+      limit:1
+    });
+    renderCellSignalSummary(result);
+  }catch(_){
+    renderCellSignalSummary(null);
+  }
+}
+
 async function loadDevices(){
   try{
     const result=await chrome.runtime.sendMessage({type:"getConnectedDevices"});
@@ -183,12 +437,38 @@ async function load(){
   }catch(e){document.title="● Offline | Router Monitor";showError(e.message);}
 }
 $("settingsBtn").addEventListener("click",()=>chrome.runtime.openOptionsPage());
+$("floatCellBtn")?.addEventListener("click",openCellFloatingWindow);
+$("historyBtn")?.addEventListener("click",()=>chrome.tabs.create({url:chrome.runtime.getURL("history.html")}));
 $("themeBtn").addEventListener("click",toggleTheme);
 $("wifiToggleBtn").addEventListener("click",toggleWifiVisibility);
 (async()=>{
-  const s=await chrome.storage.local.get(["theme","refreshInterval"]); setTheme(RouterCore.sanitizeTheme(s.theme)); refreshMs=RouterCore.sanitizeRefreshInterval(s.refreshInterval);
-  await Promise.all([load(),loadDevices()]);
-  const loop=async()=>{await Promise.all([load(),loadDevices()]);setTimeout(loop,refreshMs)}; setTimeout(loop,refreshMs);
+  const s=await chrome.storage.local.get(["theme","refreshInterval"]);
+  setTheme(RouterCore.sanitizeTheme(s.theme));
+  refreshMs=RouterCore.sanitizeRefreshInterval(s.refreshInterval);
+
+  // Initial load.
+  await Promise.all([load(),loadDevices(),loadCellSignalSummary()]);
+
+  // Fast loop: router status / speed only.
+  const statusLoop=async()=>{
+    await load();
+    setTimeout(statusLoop,refreshMs);
+  };
+  setTimeout(statusLoop,refreshMs);
+
+  // Slow loop: DHCP / connected devices only.
+  const deviceLoop=async()=>{
+    await loadDevices();
+    setTimeout(deviceLoop,DEVICE_REFRESH_MS);
+  };
+  setTimeout(deviceLoop,DEVICE_REFRESH_MS);
+
+  // Local-only summary refresh. This does not send a router request.
+  const cellSummaryLoop=async()=>{
+    await loadCellSignalSummary();
+    setTimeout(cellSummaryLoop,DEVICE_REFRESH_MS);
+  };
+  setTimeout(cellSummaryLoop,DEVICE_REFRESH_MS);
 })();
 
 function monitorPauseUntilFromPreset(preset){
