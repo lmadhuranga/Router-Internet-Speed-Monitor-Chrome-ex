@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>● Connecting… | Router Monitor</title><link rel="stylesheet" href="monitor.css"></head>
+<body>
+<main class="page">
+<header class="header">
+  <div>
+    <p class="eyebrow">ROUTER MONITOR</p>
+    <h1>Live Monitor</h1>
+    <p id="subtitle">Dialog ZLT P11 Outdoor</p>
+  </div>
+  <div class="header-actions">
+    <span id="statusPill" class="pill">Connecting</span>
+    <button id="pauseMonitorBtn" class="pause-monitor-btn">Pause</button>
+    <button id="themeBtn" class="theme-btn" title="Toggle theme" aria-label="Toggle theme">☾</button>
+    <button id="settingsBtn">⚙ Settings</button>
+  </div>
+</header>
+<section class="metrics">
+<article><span>↑ Upload</span><strong id="upload">0 <small>KB/s</small></strong></article>
+<article><span>↓ Download</span><strong id="download">0 <small>KB/s</small></strong></article>
+<article><span>▥ Signal</span><strong id="signal">-- <small>dBm</small></strong></article>
+<article><span>⌁ Wi-Fi</span><strong id="wifi">--</strong></article>
+</section>
+<section class="panel wifi-panel">
+<div class="panel-heading">
+  <div><h2>Wi-Fi Visibility</h2><p>Control whether the SSID is visible or hidden.</p></div>
+  <button id="wifiToggleBtn" class="wifi-action" disabled>Checking…</button>
+</div>
+<div class="wifi-state-row"><span>Current state</span><strong id="wifiState">Checking…</strong></div>
+</section>
+
+<section class="panel">
+<div class="panel-heading">
+  <div>
+    <h2>Connected / Leased Devices</h2>
+    <p>Devices reported by CMD 121 from the router DHCP client list.</p>
+  </div>
+  <span id="deviceCount" class="count-badge">0 devices</span>
+</div>
+<div id="devicesList" class="devices-list">
+  <div class="device-empty">Loading devices…</div>
+</div>
+</section>
+
+<section class="panel">
+<h2>Connection Details</h2>
+<div class="rows">
+<div><span>Router</span><strong id="origin">192.168.8.1</strong></div>
+<div><span>WAN IP</span><strong id="wanIP">--</strong></div>
+<div><span>Gateway</span><strong id="gateway">--</strong></div>
+<div><span>PLMN</span><strong id="plmn">--</strong></div>
+<div><span>Uptime</span><strong id="uptime">--</strong></div>
+<div><span>Wi-Fi SSID</span><strong id="ssid">--</strong></div>
+</div>
+</section>
+<div id="error" class="error hidden"></div>
+</main>
+<script src="core.js"></script><script src="monitor.js"></script>
+</body></html>

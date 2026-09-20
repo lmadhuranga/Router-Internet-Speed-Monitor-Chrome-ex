@@ -1,162 +1,86 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Router Monitor</title>
-
-  <link rel="stylesheet" href="popup.css" />
+  <link rel="stylesheet" href="popup.css">
 </head>
-
 <body>
-
-  <div class="popup">
-
-    <!-- Header -->
-    <div class="header">
-      <div class="title">
-        Router Monitor
+  <main class="popup">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">▥</div>
+        <div><h1>Router Monitor</h1><p id="routerAddress">192.168.8.1</p></div>
       </div>
+      <div class="actions">
+        <button id="themeBtn" class="icon-btn" title="Toggle theme">☾</button>
+        <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
+      </div>
+    </header>
 
-      <div id="statusDot" class="status-dot connecting"></div>
+    <div class="connection-line">
+      <span id="statusDot" class="dot connecting"></span>
+      <strong id="statusText">Connecting</strong>
+      <span class="device-label">ZLT P11</span>
     </div>
 
+    <section class="speed-grid">
+      <article class="metric upload">
+        <span class="metric-icon">↑</span>
+        <div><span id="uploadSpeed" class="metric-value">0</span><span id="uploadUnit" class="unit"> KB/s</span><p>Upload</p></div>
+      </article>
+      <article class="metric download">
+        <span class="metric-icon">↓</span>
+        <div><span id="downloadSpeed" class="metric-value">0</span><span id="downloadUnit" class="unit"> KB/s</span><p>Download</p></div>
+      </article>
+    </section>
 
-    <!-- Signal -->
-    <div class="signal-section">
+    <section class="detail-grid">
+      <article class="detail">
+        <span class="detail-icon">▥</span>
+        <div><strong id="signalValue">-- dBm</strong><small>Signal Strength</small></div>
+      </article>
+      <article class="detail">
+        <span class="detail-icon">⌁</span>
+        <div><strong id="wifiStatus">Checking…</strong><small>Wi-Fi Visibility</small></div>
+      </article>
+    </section>
 
-      <div id="signalValue" class="signal-value">
-        -- dBm
+    <section class="wifi-control-card">
+      <div class="wifi-control-copy">
+        <strong>Wi-Fi SSID Visibility</strong>
+        <small>Show or hide the router Wi-Fi network name.</small>
       </div>
-
-      <div class="signal-label">
-        Signal
-      </div>
-
+      <button id="wifiToggleBtn" class="wide secondary" disabled>Checking Wi-Fi…</button>
+    </section>
+    <div class="button-row">
+      <button id="refreshBtn" class="wide secondary">↻ Refresh</button>
+      <button id="openMonitorBtn" class="wide primary">Open Monitor ↗</button>
     </div>
 
-
-    <!-- Speed -->
-    <div class="speed-container">
-
-      <!-- Upload -->
-      <div class="speed-card">
-
-        <div class="speed-icon upload">
-          ↑
+    <div id="errorMessage" class="error hidden"></div>
+    <footer><span id="refreshText">Live update: 1s</span><span>v2.0.0</span></footer>
+  
+    <section class="pause-card">
+      <div class="pause-copy">
+        <strong>Monitor Power</strong>
+        <small id="pauseStatus">Running normally</small>
+      </div>
+      <div class="pause-actions">
+        <button id="pauseMenuBtn" class="wide secondary">Pause Monitor</button>
+        <div id="pauseMenu" class="pause-menu hidden">
+          <button data-pause="1h">Pause 1 hour</button>
+          <button data-pause="8h">Pause 8 hours</button>
+          <button data-pause="tomorrow">Pause until tomorrow</button>
+          <button data-pause="indefinite">Pause until I enable it</button>
         </div>
-
-        <div class="speed-info">
-
-          <div id="uploadSpeed" class="speed-value">
-            0 KB
-          </div>
-
-          <div class="speed-label">
-            Upload
-          </div>
-
-        </div>
-
+        <button id="resumeBtn" class="wide primary hidden">Resume Monitor</button>
       </div>
+    </section>
 
-
-      <!-- Download -->
-      <div class="speed-card">
-
-        <div class="speed-icon download">
-          ↓
-        </div>
-
-        <div class="speed-info">
-
-          <div id="downloadSpeed" class="speed-value">
-            0 KB
-          </div>
-
-          <div class="speed-label">
-            Download
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- Wi-Fi -->
-    <div class="wifi-section">
-
-      <div class="wifi-header">
-
-        <span class="wifi-title">
-          Wi-Fi Visibility
-        </span>
-
-        <span id="wifiStatus" class="wifi-status">
-          Checking...
-        </span>
-
-      </div>
-
-
-      <div class="wifi-controls">
-
-        <button
-          id="wifiToggleBtn"
-          class="wifi-toggle"
-          type="button"
-        >
-          Checking...
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <!-- Refresh Controls -->
-    <div class="refresh-section">
-
-      <button
-        id="refreshBtn"
-        class="refresh-btn"
-        type="button"
-      >
-        Refresh
-      </button>
-
-      <button
-        id="refresh500Btn"
-        class="interval-btn"
-        type="button"
-      >
-        500ms
-      </button>
-
-      <button
-        id="refresh1000Btn"
-        class="interval-btn active"
-        type="button"
-      >
-        1000ms
-      </button>
-
-    </div>
-
-
-    <!-- Router Status -->
-    <div
-      id="errorMessage"
-      class="error-message hidden"
-    ></div>
-
-  </div>
-
-
+</main>
+  <script src="core.js"></script>
   <script src="popup.js"></script>
-
 </body>
 </html>

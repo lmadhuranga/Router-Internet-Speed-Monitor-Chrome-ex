@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Router Monitor – Settings</title><link rel="stylesheet" href="options.css"></head>
+<body>
+<main class="shell">
+  <header><div><p class="eyebrow">ROUTER MONITOR</p><h1>Extension Settings</h1><p class="sub">Dialog ZLT P11 Outdoor · Software 40.8 · Dialog V9.8</p></div><button id="themeBtn" class="icon-btn">☾</button></header>
+  <section class="card">
+    <h2>Router Connection</h2>
+    <div class="field"><label for="routerOrigin">Router IP Address / URL</label><input id="routerOrigin" placeholder="192.168.8.1"></div>
+    <div class="field"><label for="routerUsername">Admin Username</label><input id="routerUsername" autocomplete="username"></div>
+    <div class="field"><label for="routerPassword">Admin Password</label><div class="password-row"><input id="routerPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep current password"><button id="showPassword" type="button">Show</button></div><small>Password is hashed locally before storage; plaintext is not saved.</small></div>
+    <div class="test-row"><button id="testBtn" class="secondary">Test Connection</button><span id="testResult"></span></div>
+  </section>
+  <section class="card">
+    <h2>Monitoring</h2>
+    <div class="field"><label for="refreshInterval">Refresh interval</label><select id="refreshInterval"><option value="500">500 ms</option><option value="1000">1000 ms (Recommended)</option></select></div>
+    <div class="field"><label for="speedUnit">Speed unit</label><select id="speedUnit"><option value="KB/s">KB/s (Default)</option><option value="Mbps">Mbps</option></select></div>
+    <div class="field"><label for="theme">Theme</label><select id="theme"><option value="dark">Dark (Default)</option><option value="light">Light</option></select></div>
+  </section>
+  
+  <section class="card">
+    <h2>New-device alerts</h2>
+    <p class="sub">Router Monitor watches CMD 121 for new MAC addresses. A MAC address first seen after the initial baseline is marked in red and can trigger a Chrome notification.</p>
+    <p class="sub">Use the Live Monitor page to rename a device and mark it as <strong>My device</strong>. Aliases are stored locally by MAC address.</p>
+  </section>
+
+  <div class="footer-actions"><button id="resetBtn" class="ghost">Reset to Defaults</button><button id="saveBtn" class="primary">Save Settings</button></div>
+  <div id="notice" class="notice hidden"></div>
+</main>
+<script src="core.js"></script><script src="md5.js"></script><script src="options.js"></script>
+</body></html>

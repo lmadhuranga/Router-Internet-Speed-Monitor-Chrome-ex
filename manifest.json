@@ -1,19 +1,35 @@
 {
   "manifest_version": 3,
-  "name": "Router Internet Speed Monitor",
-  "version": "1.1.0",
-  "description": "Monitor router speed, signal strength and connection information.",
+  "name": "Router Monitor",
+  "version": "2.1.1",
+  "description": "Monitor speed, signal strength and Wi-Fi visibility on the Dialog ZLT P11 Outdoor LTE CPE.",
   "permissions": [
-    "storage"
+    "storage",
+    "notifications",
+    "alarms"
   ],
   "host_permissions": [
     "http://192.168.8.1/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Router Speed",
-    "default_popup": "popup.html"
+    "default_title": "Router Monitor",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icon128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "128": "icon128.png"
   }
 }

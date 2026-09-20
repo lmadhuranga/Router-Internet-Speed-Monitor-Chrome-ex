@@ -1,0 +1,494 @@
+{
+  "info": {
+    "_postman_id": "b73b1a6a-41aa-4fc6-b6d1-zltp11routerapi",
+    "name": "Dialog ZLT P11 Router API",
+    "description": "Postman collection for APIs verified on Dialog Sri Lanka ZLT P11 Outdoor LTE CPE (Software 40.8 / Sri Lanka Dialog V9.8). Uses placeholders only; do not commit live session IDs, cookies, router credentials, Wi-Fi passwords, IMEI/IMSI/ICCID, or other secrets.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://192.168.8.1"
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "passwordHash",
+      "value": ""
+    },
+    {
+      "key": "mac",
+      "value": "AA:BB:CC:DD:EE:FF"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "CMD 100 - Authenticate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 100,\n  \"method\": \"POST\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"username\": \"{{username}}\",\n  \"passwd\": \"{{passwordHash}}\",\n  \"language\": \"EN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Authenticates with the router. Replace variables locally; do not save real credentials in source control."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Router Status",
+      "item": [
+        {
+          "name": "CMD 0 - Router Status / WAN Counters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 0,\n  \"method\": \"GET\",\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Returns status fields used by Router Monitor such as RSSI, WAN RX/TX bytes, WAN IP, gateway, PLMN and uptime."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wi-Fi",
+      "item": [
+        {
+          "name": "CMD 117 - Read Wi-Fi Configuration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 117,\n  \"method\": \"GET\",\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Observed response is comma-separated text. macinfo_broadcast=0 means SSID visible; 1 means hidden."
+          }
+        },
+        {
+          "name": "CMD 117 - Update Wi-Fi Visibility (Template)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 117,\n  \"method\": \"POST\",\n  \"datas\": [\n    {\n      \"ipMacId\": \"-1\",\n      \"macinfo_mac\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_ip\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_wifiOpen\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_ssid\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_rts\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_txPower\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_channel\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_wifiWorkMode\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_security_config\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_pwd\": \"<PRESERVE_FROM_GET>\",\n      \"macinfo_broadcast\": \"0\",\n      \"cmd\": 2,\n      \"method\": \"POST\",\n      \"secMode\": \"<PRESERVE_FROM_GET>\",\n      \"secFile\": \"<PRESERVE_FROM_GET>\",\n      \"cypher\": \"<PRESERVE_FROM_GET>\",\n      \"wpa\": \"<PRESERVE_FROM_GET>\",\n      \"debug\": \"0\",\n      \"groupRekey\": \"<PRESERVE_FROM_GET>\",\n      \"gmkRekey\": \"<PRESERVE_FROM_GET>\",\n      \"pskKey\": \"<PRESERVE_FROM_GET>\",\n      \"chMode\": \"<PRESERVE_FROM_GET>\",\n      \"pureg\": \"<PRESERVE_FROM_GET>\",\n      \"puren\": \"<PRESERVE_FROM_GET>\",\n      \"rateCtl\": \"<PRESERVE_FROM_GET>\",\n      \"manRate\": \"<PRESERVE_FROM_GET>\",\n      \"manRetries\": \"<PRESERVE_FROM_GET>\"\n    }\n  ],\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Template only. Read CMD 117 first and preserve all existing Wi-Fi fields. Change macinfo_broadcast only: 0=visible, 1=hidden."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devices",
+      "item": [
+        {
+          "name": "CMD 121 - DHCP Client / Device List",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 121,\n  \"method\": \"GET\",\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Returns rows in the form [IPv4, MAC, hostname, remaining DHCP lease time]."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Access Rules",
+      "item": [
+        {
+          "name": "CMD 23 - Save IPv4 + IPv6 Access Rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 23,\n  \"method\": \"POST\",\n  \"success\": true,\n  \"datas\": [\n    {\n      \"enableRule\": true,\n      \"enableLink\": true,\n      \"remark\": \"Example IPv6 rule\",\n      \"ippro\": \"IPV6\",\n      \"mac\": \"{{mac}}\"\n    },\n    {\n      \"enableRule\": true,\n      \"enableLink\": false,\n      \"remark\": \"Example IPv4 rule\",\n      \"ippro\": \"IPV4\",\n      \"mac\": \"{{mac}}\"\n    }\n  ],\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Saves the full desired rule list. enableLink=true allows; false blocks. After successful CMD 23, run CMD 20."
+          }
+        },
+        {
+          "name": "CMD 23 - Delete Rule by Omission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 23,\n  \"method\": \"POST\",\n  \"success\": true,\n  \"datas\": [\n    {\n      \"enableRule\": true,\n      \"enableLink\": false,\n      \"remark\": \"Example IPv4 rule\",\n      \"ippro\": \"IPV4\",\n      \"mac\": \"{{mac}}\"\n    }\n  ],\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Example deletion flow: omit the unwanted rule from datas and send the remaining complete rule list. Then run CMD 20."
+          }
+        },
+        {
+          "name": "CMD 20 - Apply / Commit Rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cmd\": 20,\n  \"method\": \"POST\",\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Apply/commit after CMD 23. This firmware has been observed returning an empty response body."
+          }
+        }
+      ]
+    },
+    {
+      "name": "LTE / Cell Diagnostics",
+      "item": [
+        {
+          "name": "CMD 186 - LTE Radio and Cell Diagnostics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain, */*; q=0.01"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json; charset=UTF-8"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{baseUrl}}/mindex.html"
+              },
+              {
+                "key": "X-Requested-With",
+                "value": "XMLHttpRequest"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"POST\",\n  \"cmd\": 186,\n  \"atcmd\": [\n    \"AT+TZEARFCN?\",\n    \"AT+TZBAND?\",\n    \"AT+TZBANDWIDTH?\",\n    \"AT+TZTRANSMODE?\",\n    \"AT+TZRSRP?\",\n    \"AT+TZRSRQ?\",\n    \"AT+TZSINR?\",\n    \"AT+TZTA?\",\n    \"AT+TZTXPOWER?\",\n    \"AT+CEREG?\",\n    \"AT+TZGLBCELLID?\",\n    \"AT+TZPHYCELLID?\"\n  ],\n  \"language\": \"EN\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cgi-bin/http.cgi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cgi-bin",
+                "http.cgi"
+              ]
+            },
+            "description": "Returns LTE diagnostics in message text: EARFCN, band, bandwidth, transmission mode, RSRP, RSRQ, SINR, timing advance, TX power, CEREG/TAC/ECI, global cell ID and physical cell ID (PCI). Observed RSRQ raw value -110 corresponds to UI -11 dB."
+          }
+        }
+      ]
+    }
+  ]
+}
